@@ -11,6 +11,6 @@ It simulates incoming transactions for its MEV potential and then categorizes th
 - Arbitrage
 - Liquadation
 
-This repo contains the frontend of this project
+This repo contains the backend of this project
 
 Frontend repo: <https://github.com/Godspower-Eze/mev-monitor>
