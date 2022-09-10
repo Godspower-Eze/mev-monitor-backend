@@ -8,43 +8,41 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.listener = void 0;
 const ethers_1 = require("ethers");
 const constants_1 = require("../constants");
-const blocknative_1 = __importDefault(require("../services/blocknative"));
+const queues_1 = require("../queues");
 const listener = () => {
     const provider = new ethers_1.ethers.providers.WebSocketProvider(constants_1.RPCS.INFURA_WS);
     provider.on("pending", (tx) => __awaiter(void 0, void 0, void 0, function* () {
-        const connection = {};
-        connection.url = constants_1.RPCS.PERSONAL_RPC;
-        connection.user = constants_1.RPC_USERNAME;
-        connection.password = constants_1.RPC_PASSWORD;
-        const provider = new ethers_1.ethers.providers.JsonRpcProvider(connection, 1);
+        var _a;
+        // const connection: any = {};
+        // connection.url = RPCS.PERSONAL_RPC;
+        // connection.user = RPC_USERNAME;
+        // connection.password = RPC_PASSWORD;
+        const provider = new ethers_1.ethers.providers.JsonRpcProvider(constants_1.RPCS.ANKR_RPC);
         try {
             const transactionInfo = yield provider.getTransaction(tx);
             if (transactionInfo) {
-                console.log(transactionInfo);
-                const blocknativeInstance = new blocknative_1.default();
-                const client = blocknativeInstance.client();
                 const transactions = [
                     {
                         to: transactionInfo.to,
-                        from: "0x691B7091689b6BE6FBc1898DC44Bab8944344fa5",
+                        from: constants_1.CALLER,
                         gas: transactionInfo.gasLimit.toNumber(),
-                        value: transactionInfo.value,
-                        input: transactionInfo.data
+                        value: 100000000000000000,
+                        input: transactionInfo.data,
+                        gasPrice: (_a = transactionInfo.gasPrice) === null || _a === void 0 ? void 0 : _a.toNumber()
                     },
                 ];
-                const response = yield blocknativeInstance.simulate(client, transactions);
-                console.log(response);
+                const queueId = ethers_1.BigNumber.from(Math.floor(Math.random() * constants_1.MULTIPLIER)).toHexString();
+                const { handleSimulation } = (0, queues_1.newSimulatorProcess)(queueId);
+                yield handleSimulation({ transactions });
             }
         }
         catch (err) {
-            console.log(err);
+            console.error(err);
+            console.log("----------------- MONITOR ERROR END --------------------");
         }
     }));
 };

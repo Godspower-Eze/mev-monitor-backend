@@ -1,37 +1,40 @@
-import { ethers } from "ethers";
+import { ethers, BigNumber } from "ethers";
 
-import { RPCS, RPC_PASSWORD, RPC_USERNAME } from "../constants";
+import { CALLER, MULTIPLIER, RPCS, RPC_PASSWORD, RPC_USERNAME } from "../constants";
+import { newSimulatorProcess } from "../queues";
 import BlockNative from "../services/blocknative";
 import { ITransactionInfo } from "../types";
 
 export const listener = () => {
   const provider = new ethers.providers.WebSocketProvider(RPCS.INFURA_WS!);
   provider.on("pending", async (tx) => {
-    const connection: any = {};
-    connection.url = RPCS.PERSONAL_RPC;
-    connection.user = RPC_USERNAME;
-    connection.password = RPC_PASSWORD;
-    const provider = new ethers.providers.JsonRpcProvider(connection, 1);
+    // const connection: any = {};
+    // connection.url = RPCS.PERSONAL_RPC;
+    // connection.user = RPC_USERNAME;
+    // connection.password = RPC_PASSWORD;
+    const provider = new ethers.providers.JsonRpcProvider(RPCS.ANKR_RPC);
     try {
-        const transactionInfo = await provider.getTransaction(tx);
+      const transactionInfo = await provider.getTransaction(tx);
       if (transactionInfo) {
-          console.log(transactionInfo)
-          const blocknativeInstance = new BlockNative()
-          const client = blocknativeInstance.client()
           const transactions: ITransactionInfo[] = [
             {
               to: transactionInfo.to!,
-              from: "0x691B7091689b6BE6FBc1898DC44Bab8944344fa5",
+              from: CALLER,
               gas: transactionInfo.gasLimit.toNumber(),
-              value: transactionInfo.value,
-              input: transactionInfo.data
+              value: 1_000_000_000_000_000_00,
+              input: transactionInfo.data,
+              gasPrice: transactionInfo.gasPrice?.toNumber()
             },
           ];
-          const response = await blocknativeInstance.simulate(client, transactions)
-          console.log(response)
+          const queueId = BigNumber.from(
+            Math.floor(Math.random() * MULTIPLIER)
+          ).toHexString();
+          const { handleSimulation } = newSimulatorProcess(queueId);
+          await handleSimulation({ transactions });
         }
     } catch (err) {
-        console.log(err)
+      console.error(err)
+      console.log("----------------- MONITOR ERROR END --------------------")
     }
   });
 };

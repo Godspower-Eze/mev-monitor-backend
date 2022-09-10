@@ -1,5 +1,6 @@
 import { BigNumber } from "ethers";
 
+// Utils
 export interface ITransactionInfo {
   to: string;
   from: string;
@@ -9,4 +10,11 @@ export interface ITransactionInfo {
   gasPrice?: number;
   maxFeePerGas?: number;
   maxPriorityFeePerGas?: number;
+}
+
+// Models
+export interface ITransactions {
+  hash: string;
+  category: string;
+  platform: string
 }
